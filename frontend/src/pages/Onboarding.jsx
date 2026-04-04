@@ -4,99 +4,174 @@ import { useAuth0 } from '@auth0/auth0-react'
 import { analyzeProfile } from '../utils/api'
 
 const STEPS = [
-  { id: 'basics', title: 'Tell us about yourself', subtitle: 'This helps us tailor your risk assessment.',
+  {
+    id: 'profile',
+    title: 'Tell us about your life context',
+    subtitle: 'This helps the simulator reason about stress, resilience, and tradeoffs.',
     fields: [
-      { key: 'age',          label: 'Your age',               type: 'number', placeholder: '32', min: 18, max: 100 },
-      { key: 'income_range', label: 'Annual household income', type: 'select', options: [
-        { value: 'under_30k', label: 'Under $30,000' },
-        { value: '30k_60k',   label: '$30,000 – $60,000' },
-        { value: '60k_100k',  label: '$60,000 – $100,000' },
-        { value: 'over_100k', label: 'Over $100,000' },
-      ]},
-      { key: 'employment', label: 'Employment status', type: 'select', options: [
-        { value: 'employed',      label: 'Full-time employed' },
-        { value: 'self_employed', label: 'Self-employed / Freelance' },
-        { value: 'unemployed',    label: 'Unemployed / Seeking work' },
-        { value: 'retired',       label: 'Retired' },
-      ]},
+      { key: 'age', label: 'Your age', type: 'number', placeholder: '29', min: 18, max: 100 },
+      {
+        key: 'income_range',
+        label: 'Annual household income',
+        type: 'select',
+        options: [
+          { value: 'under_30k', label: 'Under $30,000' },
+          { value: '30k_60k', label: '$30,000 - $60,000' },
+          { value: '60k_100k', label: '$60,000 - $100,000' },
+          { value: 'over_100k', label: 'Over $100,000' },
+        ],
+      },
+      {
+        key: 'employment',
+        label: 'Employment status',
+        type: 'select',
+        options: [
+          { value: 'employed', label: 'Employed full time' },
+          { value: 'self_employed', label: 'Self-employed' },
+          { value: 'unemployed', label: 'Between jobs' },
+          { value: 'retired', label: 'Retired' },
+        ],
+      },
+      { key: 'dependents', label: 'Dependents relying on you', type: 'number', placeholder: '1', min: 0, max: 10 },
     ],
   },
-  { id: 'family', title: 'Family & housing', subtitle: 'Your living situation affects your insurance needs significantly.',
+  {
+    id: 'decision',
+    title: 'What decision are you considering?',
+    subtitle: 'We will simulate its impact across money, stress, risk, and goals.',
     fields: [
-      { key: 'dependents',   label: 'Number of dependents', type: 'number', placeholder: '0', min: 0, max: 20 },
-      { key: 'housing_type', label: 'Housing situation',    type: 'select', options: [
-        { value: 'rent',  label: 'I rent an apartment/home' },
-        { value: 'own',   label: 'I own my home' },
-        { value: 'other', label: 'Other (living with family, etc.)' },
-      ]},
-      { key: 'zip_code', label: 'ZIP code (for disaster risk)', type: 'text', placeholder: '90210', maxLength: 5 },
+      {
+        key: 'decision_type',
+        label: 'Decision type',
+        type: 'select',
+        options: [
+          { value: 'buy_car', label: 'Buy a car' },
+          { value: 'move_city', label: 'Move to a new city' },
+          { value: 'take_loan', label: 'Take a loan' },
+          { value: 'change_job', label: 'Change jobs' },
+        ],
+      },
+      { key: 'decision_cost', label: 'Expected monthly cost or income hit', type: 'number', placeholder: '850', min: 100, max: 10000 },
+      { key: 'time_horizon', label: 'Planning horizon (months)', type: 'number', placeholder: '12', min: 3, max: 36 },
+      {
+        key: 'goal_priority',
+        label: 'Top life goal to protect',
+        type: 'select',
+        options: [
+          { value: 'emergency_fund', label: 'Build emergency fund' },
+          { value: 'family_security', label: 'Support family security' },
+          { value: 'homeownership', label: 'Save for homeownership' },
+          { value: 'career_growth', label: 'Invest in career growth' },
+        ],
+      },
     ],
   },
-  { id: 'savings', title: 'Your current savings', subtitle: "Be honest — there's no judgment here.",
+  {
+    id: 'resilience',
+    title: 'How prepared do you feel today?',
+    subtitle: 'This helps the AI coach understand your current buffer and stress load.',
     fields: [
-      { key: 'has_savings',    label: 'Do you have emergency savings?', type: 'select', options: [
-        { value: 'true',  label: 'Yes, I have some savings' },
-        { value: 'false', label: 'No emergency savings yet' },
-      ]},
-      { key: 'savings_months', label: 'How many months of expenses could you cover?', type: 'select', options: [
-        { value: '0', label: 'None / Less than 1 month' },
-        { value: '1', label: 'About 1 month' },
-        { value: '2', label: 'About 2 months' },
-        { value: '3', label: '3 months' },
-        { value: '4', label: '4–5 months' },
-        { value: '6', label: '6+ months ✓' },
-      ]},
+      {
+        key: 'current_savings',
+        label: 'Emergency savings available today',
+        type: 'select',
+        options: [
+          { value: '0', label: 'Less than 1 month' },
+          { value: '1', label: 'About 1 month' },
+          { value: '2', label: 'About 2 months' },
+          { value: '3', label: 'About 3 months' },
+          { value: '4', label: '4 to 5 months' },
+          { value: '6', label: '6 or more months' },
+        ],
+      },
+      {
+        key: 'stress_level',
+        label: 'Current stress level',
+        type: 'select',
+        options: [
+          { value: '2', label: 'Low and manageable' },
+          { value: '5', label: 'Moderate and steady' },
+          { value: '8', label: 'High and tiring' },
+        ],
+      },
     ],
   },
 ]
 
-const DEFAULT_FORM = { age: '', income_range: '', employment: '', dependents: '', housing_type: '', zip_code: '', has_savings: '', savings_months: '' }
+const DEFAULT_FORM = {
+  age: '',
+  income_range: '',
+  employment: '',
+  dependents: '',
+  current_savings: '',
+  stress_level: '',
+  goal_priority: '',
+  decision_type: '',
+  decision_cost: '',
+  time_horizon: '',
+}
 
-const inputStyle = { width: '100%', padding: '12px 14px', border: '1.5px solid var(--border)', borderRadius: 10, fontSize: '0.9rem', background: 'var(--white)', color: 'var(--navy)', appearance: 'none', WebkitAppearance: 'none' }
-const focusStyle = { borderColor: 'var(--emerald)', boxShadow: '0 0 0 3px rgba(5,150,105,0.15)' }
+const inputStyle = {
+  width: '100%',
+  padding: '13px 14px',
+  border: '1px solid var(--border)',
+  borderRadius: 18,
+  fontSize: '0.95rem',
+  background: 'rgba(255,255,255,0.88)',
+  color: 'var(--ink)',
+  appearance: 'none',
+  WebkitAppearance: 'none',
+}
 
 export default function Onboarding({ setProfile, setResults }) {
-  const [step, setStep]       = useState(0)
-  const [form, setForm]       = useState(DEFAULT_FORM)
-  const [errors, setErrors]   = useState({})
+  const [step, setStep] = useState(0)
+  const [form, setForm] = useState(DEFAULT_FORM)
+  const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
-  const [focused, setFocused] = useState(null)
-  const navigate    = useNavigate()
-  const { getAccessTokenSilently, isAuthenticated, loginWithRedirect } = useAuth0()
+  const navigate = useNavigate()
+  const { getAccessTokenSilently, isAuthenticated } = useAuth0()
 
   const current = STEPS[step]
 
   function validate() {
-    const errs = {}
+    const nextErrors = {}
     for (const field of current.fields) {
-      const val = form[field.key]
-      if (!val && val !== 0) errs[field.key] = 'This field is required'
-      if (field.key === 'zip_code' && val && !/^\d{5}$/.test(val)) errs[field.key] = 'Enter a valid 5-digit ZIP'
-      if (field.key === 'age' && val && (parseInt(val) < 18 || parseInt(val) > 100)) errs[field.key] = 'Enter a valid age (18–100)'
+      const value = form[field.key]
+      if (value === '') nextErrors[field.key] = 'This field is required.'
+      if (field.key === 'age' && value && (parseInt(value, 10) < 18 || parseInt(value, 10) > 100)) {
+        nextErrors[field.key] = 'Enter an age between 18 and 100.'
+      }
     }
-    setErrors(errs)
-    return Object.keys(errs).length === 0
+    setErrors(nextErrors)
+    return Object.keys(nextErrors).length === 0
   }
 
   async function handleNext() {
     if (!validate()) return
-    if (step < STEPS.length - 1) { setStep(s => s + 1); return }
-
-    // On final step — require login before showing results
-    if (!isAuthenticated) {
-      await loginWithRedirect({ appState: { returnTo: '/onboarding' } })
+    if (step < STEPS.length - 1) {
+      setStep((value) => value + 1)
       return
     }
 
     setLoading(true)
     try {
-      const payload = { ...form, age: parseInt(form.age), dependents: parseInt(form.dependents), has_savings: form.has_savings === 'true', savings_months: parseInt(form.savings_months) }
+      const payload = {
+        ...form,
+        age: parseInt(form.age, 10),
+        dependents: parseInt(form.dependents, 10),
+        current_savings: parseInt(form.current_savings, 10),
+        stress_level: parseInt(form.stress_level, 10),
+        decision_cost: parseInt(form.decision_cost, 10),
+        time_horizon: parseInt(form.time_horizon, 10),
+      }
       setProfile(payload)
-      const getToken = () => getAccessTokenSilently({ authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE } })
+      const getToken = isAuthenticated
+        ? () => getAccessTokenSilently({ authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE } })
+        : null
       const data = await analyzeProfile(payload, getToken)
       setResults(data)
       navigate('/dashboard')
-    } catch (e) {
+    } catch {
       alert('Something went wrong. Make sure the backend is running on port 8000.')
     } finally {
       setLoading(false)
@@ -104,49 +179,63 @@ export default function Onboarding({ setProfile, setResults }) {
   }
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 60px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem' }}>
-      <div style={{ width: '100%', maxWidth: 520 }}>
-        {/* Progress bar */}
-        <div style={{ marginBottom: '2rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--muted)', fontWeight: 500 }}>Step {step + 1} of {STEPS.length}</span>
-            <span style={{ fontSize: '0.8rem', color: 'var(--emerald)', fontWeight: 600 }}>{Math.round(((step + 1) / STEPS.length) * 100)}%</span>
+    <div style={{ minHeight: 'calc(100vh - 68px)', padding: '2rem 1rem 3rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: 620 }}>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: '0.85rem' }}>
+            <span style={{ color: 'var(--muted)' }}>Step {step + 1} of {STEPS.length}</span>
+            <span style={{ color: 'var(--accent-strong)', fontWeight: 700 }}>{Math.round(((step + 1) / STEPS.length) * 100)}%</span>
           </div>
-          <div style={{ height: 4, background: 'var(--border)', borderRadius: 2 }}>
-            <div style={{ height: '100%', width: `${((step + 1) / STEPS.length) * 100}%`, background: 'var(--emerald)', borderRadius: 2, transition: 'width 0.4s ease' }} />
+          <div style={{ height: 8, background: 'rgba(119, 96, 73, 0.1)', borderRadius: 999 }}>
+            <div style={{ width: `${((step + 1) / STEPS.length) * 100}%`, height: '100%', background: 'linear-gradient(90deg, var(--accent), var(--accent-strong))', borderRadius: 999, transition: 'width 0.25s ease' }} />
           </div>
         </div>
 
-        {/* Card */}
-        <div className="card fade-up" style={{ padding: '2.5rem' }}>
-          <h2 style={{ marginBottom: '0.5rem' }}>{current.title}</h2>
-          <p style={{ marginBottom: '2rem', fontSize: '0.9rem' }}>{current.subtitle}</p>
+        <div className="glass-panel fade-up" style={{ padding: '2rem' }}>
+          <div className="mini-kicker">Decision intake</div>
+          <h2 style={{ marginTop: '0.35rem' }}>{current.title}</h2>
+          <p style={{ marginTop: '0.5rem', marginBottom: '1.75rem' }}>{current.subtitle}</p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-            {current.fields.map(field => (
+          <div style={{ display: 'grid', gap: '1rem' }}>
+            {current.fields.map((field) => (
               <div key={field.key}>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 500, color: 'var(--navy)', marginBottom: 6 }}>{field.label}</label>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--ink)', marginBottom: 8 }}>{field.label}</label>
                 {field.type === 'select' ? (
-                  <select value={form[field.key]} onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))} onFocus={() => setFocused(field.key)} onBlur={() => setFocused(null)} style={{ ...inputStyle, ...(focused === field.key ? focusStyle : {}) }}>
-                    <option value="">Select an option…</option>
-                    {field.options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                  <select value={form[field.key]} onChange={(event) => setForm((value) => ({ ...value, [field.key]: event.target.value }))} style={inputStyle}>
+                    <option value="">Select an option</option>
+                    {field.options.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
                   </select>
                 ) : (
-                  <input type={field.type} value={form[field.key]} onChange={e => setForm(f => ({ ...f, [field.key]: e.target.value }))} onFocus={() => setFocused(field.key)} onBlur={() => setFocused(null)} placeholder={field.placeholder} min={field.min} max={field.max} maxLength={field.maxLength} style={{ ...inputStyle, ...(focused === field.key ? focusStyle : {}) }} />
+                  <input
+                    type={field.type}
+                    value={form[field.key]}
+                    onChange={(event) => setForm((value) => ({ ...value, [field.key]: event.target.value }))}
+                    placeholder={field.placeholder}
+                    min={field.min}
+                    max={field.max}
+                    style={inputStyle}
+                  />
                 )}
-                {errors[field.key] && <p style={{ color: 'var(--red)', fontSize: '0.78rem', marginTop: 4 }}>⚠ {errors[field.key]}</p>}
+                {errors[field.key] && <p style={{ fontSize: '0.8rem', color: 'var(--danger)', marginTop: 6 }}>{errors[field.key]}</p>}
               </div>
             ))}
           </div>
 
-          <div style={{ display: 'flex', gap: 10, marginTop: '2rem' }}>
-            {step > 0 && <button onClick={() => setStep(s => s - 1)} style={{ flex: 1, padding: '12px', borderRadius: 10, background: 'transparent', border: '1.5px solid var(--border)', color: 'var(--muted)' }}>← Back</button>}
-            <button onClick={handleNext} disabled={loading} style={{ flex: 2, padding: '12px', borderRadius: 10, background: loading ? 'var(--muted)' : 'var(--emerald)', color: '#fff', fontWeight: 600, fontSize: '0.95rem' }}>
-              {loading ? 'Analyzing…' : step === STEPS.length - 1 ? (isAuthenticated ? 'See My Results →' : 'Sign in to See Results →') : 'Continue →'}
+          <div style={{ display: 'flex', gap: 12, marginTop: '1.8rem' }}>
+            {step > 0 && (
+              <button className="secondary-button" style={{ flex: 1 }} onClick={() => setStep((value) => value - 1)}>
+                Back
+              </button>
+            )}
+            <button className="primary-button" style={{ flex: 2, justifyContent: 'center' }} onClick={handleNext} disabled={loading}>
+              {loading ? 'Simulating...' : 'Generate futures'}
             </button>
           </div>
         </div>
-        <p style={{ textAlign: 'center', fontSize: '0.75rem', marginTop: '1rem' }}>🔒 Secured by Auth0 · Your data stays private</p>
+
+        <p style={{ textAlign: 'center', fontSize: '0.8rem', marginTop: '1rem' }}>Private by design. Sign in is optional for the demo, and voice features work best when authenticated.</p>
       </div>
     </div>
   )
