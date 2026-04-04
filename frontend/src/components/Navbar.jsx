@@ -54,6 +54,9 @@ export default function Navbar({ hasProfile }) {
               <Link to="/dashboard" style={linkStyle(pathname === '/dashboard')}>
                 Dashboard
               </Link>
+              <Link to="/life-impact" style={linkStyle(pathname === '/life-impact')}>
+                Life Impact AI
+              </Link>
               <Link to="/chat" style={linkStyle(pathname === '/chat')}>
                 AI Coach
               </Link>

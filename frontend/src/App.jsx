@@ -4,6 +4,7 @@ import Landing from './pages/Landing'
 import Onboarding from './pages/Onboarding'
 import Dashboard from './pages/Dashboard'
 import Chat from './pages/Chat'
+import LifeImpact from './pages/LifeImpact'
 import Navbar from './components/Navbar'
 
 export default function App() {
@@ -31,6 +32,10 @@ export default function App() {
           <Route
             path="/chat"
             element={<Chat profile={profile} />}
+          />
+          <Route
+            path="/life-impact"
+            element={<LifeImpact profile={profile} results={results} />}
           />
         </Routes>
       </main>

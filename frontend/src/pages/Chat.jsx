@@ -1,24 +1,24 @@
 import { useState, useRef, useEffect } from 'react'
-import { sendChat } from '../utils/api'
 import ReactMarkdown from 'react-markdown'
+import { sendChat } from '../utils/api'
 
 const SUGGESTIONS = [
-  'What is an emergency fund and how much do I need?',
-  'What does renters insurance actually cover?',
-  'Do I need life insurance?',
-  'How does the 50/30/20 budget rule work?',
-  'What is disability insurance?',
+  'What would buying a car do to my future stability?',
+  'How should I prepare for job loss if I only have 2 months saved?',
+  'Would taking a loan delay my goals too much?',
+  'How do I reduce money stress before making a big purchase?',
+  'What protection matters most for my situation?',
 ]
 
 export default function Chat({ profile }) {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: `Hi! I'm your FinGuard AI financial wellness coach. 👋
+      content: `Hi! I am your Life Impact AI coach.
 
-I can explain insurance products, help you understand emergency funds, walk you through budgeting basics, and answer any financial literacy questions — all in plain English, no jargon.
+I can help you think through future decisions, financial tradeoffs, stress exposure, insurance gaps, and emergency-fund planning in plain language.
 
-What would you like to know?`,
+Ask me about a choice you are considering, or use the simulator to compare safe, balanced, and risky futures.`,
     },
   ])
   const [input, setInput] = useState('')
@@ -33,73 +33,101 @@ What would you like to know?`,
     const msg = text || input.trim()
     if (!msg) return
     setInput('')
-    setMessages(prev => [...prev, { role: 'user', content: msg }])
+    setMessages((prev) => [...prev, { role: 'user', content: msg }])
     setLoading(true)
     try {
       const data = await sendChat(msg, profile)
-      setMessages(prev => [...prev, { role: 'assistant', content: data.response }])
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.response }])
     } catch {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: '⚠️ I couldn\'t connect to the server. Make sure the backend is running on port 8000.',
-      }])
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'I could not connect to the server. Make sure the backend is running on port 8000.',
+        },
+      ])
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column',
-      height: 'calc(100vh - 60px)',
-      maxWidth: 720, margin: '0 auto', padding: '0 1rem',
-    }}>
-
-      {/* Header */}
-      <div style={{ padding: '1rem 0 0.5rem', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: '50%',
-            background: 'var(--emerald)', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem',
-          }}>🛡</div>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        height: 'calc(100vh - 60px)',
+        maxWidth: 760,
+        margin: '0 auto',
+        padding: '0 1rem',
+      }}
+    >
+      <div style={{ padding: '1rem 0 0.75rem', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, var(--emerald), #0f766e)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontWeight: 700,
+            }}
+          >
+            AI
+          </div>
           <div>
-            <div style={{ fontWeight: 600, color: 'var(--navy)' }}>FinGuard AI Coach</div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--emerald)' }}>● Online — financial wellness expert</div>
+            <div style={{ fontWeight: 700, color: 'var(--navy)' }}>Life Impact AI Coach</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--emerald)' }}>Online and ready to reason through decisions with you</div>
           </div>
         </div>
       </div>
 
-      {/* Messages */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '1rem 0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         {messages.map((msg, i) => (
-          <div key={i} style={{
-            display: 'flex',
-            justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-          }}>
+          <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
             {msg.role === 'assistant' && (
-              <div style={{
-                width: 28, height: 28, borderRadius: '50%',
-                background: 'var(--emerald)', flexShrink: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.8rem', marginRight: 8, marginTop: 4,
-              }}>🛡</div>
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: '50%',
+                  background: 'var(--emerald)',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  marginRight: 8,
+                  marginTop: 4,
+                }}
+              >
+                AI
+              </div>
             )}
-            <div style={{
-              maxWidth: '80%',
-              padding: '10px 14px',
-              borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '4px 18px 18px 18px',
-              background: msg.role === 'user' ? 'var(--emerald)' : 'var(--white)',
-              color: msg.role === 'user' ? '#fff' : 'var(--navy)',
-              border: msg.role === 'assistant' ? '1px solid var(--border)' : 'none',
-              fontSize: '0.9rem', lineHeight: 1.65,
-              boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-            }}>
+            <div
+              style={{
+                maxWidth: '82%',
+                padding: '12px 14px',
+                borderRadius: msg.role === 'user' ? '18px 18px 6px 18px' : '6px 18px 18px 18px',
+                background: msg.role === 'user' ? 'var(--emerald)' : 'var(--white)',
+                color: msg.role === 'user' ? '#fff' : 'var(--navy)',
+                border: msg.role === 'assistant' ? '1px solid var(--border)' : 'none',
+                fontSize: '0.92rem',
+                lineHeight: 1.65,
+                boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+              }}
+            >
               {msg.role === 'assistant' ? (
                 <ReactMarkdown
                   components={{
-                    p: ({ children }) => <p style={{ margin: '0 0 0.5rem', color: 'var(--navy)' }}>{children}</p>,
-                    strong: ({ children }) => <strong style={{ color: 'var(--navy)', fontWeight: 600 }}>{children}</strong>,
+                    p: ({ children }) => <p style={{ margin: '0 0 0.6rem', color: 'var(--navy)' }}>{children}</p>,
+                    strong: ({ children }) => <strong style={{ color: 'var(--navy)', fontWeight: 700 }}>{children}</strong>,
                     ul: ({ children }) => <ul style={{ paddingLeft: '1.25rem', margin: '0.5rem 0' }}>{children}</ul>,
                     li: ({ children }) => <li style={{ color: 'var(--muted)', marginBottom: 4 }}>{children}</li>,
                     h2: ({ children }) => <h2 style={{ fontSize: '1rem', marginBottom: '0.5rem', marginTop: '0.75rem' }}>{children}</h2>,
@@ -114,80 +142,70 @@ What would you like to know?`,
 
         {loading && (
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <div style={{
-              width: 28, height: 28, borderRadius: '50%', background: 'var(--emerald)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem',
-            }}>🛡</div>
-            <div style={{
-              padding: '10px 16px', background: 'var(--white)', border: '1px solid var(--border)',
-              borderRadius: '4px 18px 18px 18px', display: 'flex', gap: 4,
-            }}>
-              {[0, 1, 2].map(i => (
-                <span key={i} style={{
-                  width: 6, height: 6, background: 'var(--muted)', borderRadius: '50%',
-                  animation: 'fadeUp 0.6s ease infinite',
-                  animationDelay: `${i * 0.15}s`,
-                }} />
-              ))}
+            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--emerald)' }} />
+            <div style={{ padding: '10px 16px', background: 'var(--white)', border: '1px solid var(--border)', borderRadius: '6px 18px 18px 18px' }}>
+              <span style={{ color: 'var(--muted)' }}>Thinking through the tradeoffs...</span>
             </div>
           </div>
         )}
         <div ref={bottomRef} />
       </div>
 
-      {/* Suggestions */}
       {messages.length <= 1 && (
-        <div style={{ padding: '0.5rem 0' }}>
-          <p style={{ fontSize: '0.78rem', marginBottom: 8 }}>Suggested questions:</p>
+        <div style={{ padding: '0.5rem 0 0.75rem' }}>
+          <p style={{ fontSize: '0.78rem', marginBottom: 8 }}>Suggested questions</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {SUGGESTIONS.map(s => (
+            {SUGGESTIONS.map((suggestion) => (
               <button
-                key={s}
-                onClick={() => send(s)}
+                key={suggestion}
+                onClick={() => send(suggestion)}
                 style={{
-                  padding: '6px 12px', borderRadius: 99,
-                  background: 'var(--white)', border: '1px solid var(--border)',
-                  color: 'var(--navy)', fontSize: '0.78rem',
-                  cursor: 'pointer',
+                  padding: '7px 12px',
+                  borderRadius: 999,
+                  background: 'var(--white)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--navy)',
+                  fontSize: '0.8rem',
                 }}
               >
-                {s}
+                {suggestion}
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Input */}
-      <div style={{
-        padding: '0.75rem 0 1rem',
-        borderTop: '1px solid var(--border)',
-        display: 'flex', gap: 8,
-      }}>
+      <div style={{ padding: '0.75rem 0 1rem', borderTop: '1px solid var(--border)', display: 'flex', gap: 8 }}>
         <input
           value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
-          placeholder="Ask about budgeting, insurance, emergency funds…"
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && send()}
+          placeholder="Ask about a decision, risk, savings, or stress trigger..."
           disabled={loading}
           style={{
-            flex: 1, padding: '11px 16px',
-            border: '1.5px solid var(--border)', borderRadius: 99,
-            fontSize: '0.9rem', background: 'var(--white)', color: 'var(--navy)',
+            flex: 1,
+            padding: '12px 16px',
+            border: '1.5px solid var(--border)',
+            borderRadius: 999,
+            fontSize: '0.92rem',
+            background: 'var(--white)',
+            color: 'var(--navy)',
           }}
         />
         <button
           onClick={() => send()}
           disabled={loading || !input.trim()}
           style={{
-            width: 44, height: 44, borderRadius: '50%',
+            width: 46,
+            height: 46,
+            borderRadius: '50%',
             background: input.trim() ? 'var(--emerald)' : 'var(--border)',
-            color: '#fff', fontSize: '1.1rem',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#fff',
+            fontWeight: 700,
             flexShrink: 0,
           }}
         >
-          →
+          Go
         </button>
       </div>
     </div>
