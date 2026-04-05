@@ -128,25 +128,25 @@ FINGUARD_PROMPT = """You are FinGuard AI, a friendly financial wellness coach he
 SIMULATOR_PROMPT = """You are Life Impact AI, a friendly financial decision coach. Help people evaluate how financial decisions affect their money, stress, resilience, and goals. Keep responses concise (under 200 words) and give specific actionable guidance.\n"""
 
 def gemini_chat(message: str, system_prompt: str = FINGUARD_PROMPT, context: str = "") -> str:
-    if not GEMINI_API_KEY:
-        return fallback_chat(message)
-    payload = {
-        "contents": [{"parts": [{"text": f"{system_prompt}\n\nUser question: {message}{context}"}]}],
-        "generationConfig": {"maxOutputTokens": 500, "temperature": 0.7}
-    }
-    import urllib.request, urllib.error, json as jm, time
-    for api_ver, model in [("v1","gemini-2.0-flash-001"),("v1","gemini-2.0-flash"),("v1beta","gemini-2.0-flash"),("v1beta","gemini-2.0-flash-lite")]:
-        url = f"https://generativelanguage.googleapis.com/{api_ver}/models/{model}:generateContent?key={GEMINI_API_KEY}"
-        for attempt in range(2):
-            try:
-                req = urllib.request.Request(url, data=jm.dumps(payload).encode(), headers={"Content-Type":"application/json"}, method="POST")
-                with urllib.request.urlopen(req, timeout=20) as r:
-                    return jm.loads(r.read())["candidates"][0]["content"]["parts"][0]["text"]
-            except urllib.error.HTTPError as e:
-                if e.code == 429: time.sleep(5*(attempt+1)); continue
-                break
-            except Exception: break
+    # if not GEMINI_API_KEY:
     return fallback_chat(message)
+    # payload = {
+    #     "contents": [{"parts": [{"text": f"{system_prompt}\n\nUser question: {message}{context}"}]}],
+    #     "generationConfig": {"maxOutputTokens": 500, "temperature": 0.7}
+    # }
+    # import urllib.request, urllib.error, json as jm, time
+    # for api_ver, model in [("v1","gemini-2.0-flash-001"),("v1","gemini-2.0-flash"),("v1beta","gemini-2.0-flash"),("v1beta","gemini-2.0-flash-lite")]:
+    #     url = f"https://generativelanguage.googleapis.com/{api_ver}/models/{model}:generateContent?key={GEMINI_API_KEY}"
+    #     for attempt in range(2):
+    #         try:
+    #             req = urllib.request.Request(url, data=jm.dumps(payload).encode(), headers={"Content-Type":"application/json"}, method="POST")
+    #             with urllib.request.urlopen(req, timeout=20) as r:
+    #                 return jm.loads(r.read())["candidates"][0]["content"]["parts"][0]["text"]
+    #         except urllib.error.HTTPError as e:
+    #             if e.code == 429: time.sleep(5*(attempt+1)); continue
+    #             break
+    #         except Exception: break
+    # return fallback_chat(message)
 
 def fallback_chat(message: str) -> str:
     msg = message.lower()
