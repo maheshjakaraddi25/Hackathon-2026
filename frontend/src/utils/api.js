@@ -1,3 +1,4 @@
+// Auto-detects backend: uses VITE_API_URL in production, proxies locally
 const BASE = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api`
   : '/api'
@@ -8,34 +9,26 @@ async function authFetch(url, options = {}, getToken = null) {
     try {
       const token = await getToken({ authorizationParams: { audience: import.meta.env.VITE_AUTH0_AUDIENCE } })
       headers['Authorization'] = `Bearer ${token}`
-    } catch (e) {
-      // Not logged in — proceed without token (for optional-auth routes)
-    }
+    } catch { /* not logged in — proceed without token */ }
   }
   const res = await fetch(url, { ...options, headers })
   if (!res.ok) throw new Error(`API error ${res.status}`)
   return res
 }
 
+// ── Your original FinGuard functions (unchanged) ──
 export async function analyzeProfile(profile, getToken = null) {
-  const res = await authFetch(`${BASE}/analyze`, {
-    method: 'POST', body: JSON.stringify(profile),
-  }, getToken)
+  const res = await authFetch(`${BASE}/analyze`, { method: 'POST', body: JSON.stringify(profile) }, getToken)
   return res.json()
 }
 
 export async function sendChat(message, profile = null, getToken = null) {
-  const res = await authFetch(`${BASE}/chat`, {
-    method: 'POST', body: JSON.stringify({ message, profile }),
-  }, getToken)
+  const res = await authFetch(`${BASE}/chat`, { method: 'POST', body: JSON.stringify({ message, profile }) }, getToken)
   return res.json()
 }
 
 export async function textToSpeech(text, getToken) {
-  const res = await authFetch(`${BASE}/tts`, {
-    method: 'POST', body: JSON.stringify({ text }),
-  }, getToken)
-  // Returns audio/mpeg blob
+  const res = await authFetch(`${BASE}/tts`, { method: 'POST', body: JSON.stringify({ text }) }, getToken)
   return res.blob()
 }
 
@@ -46,5 +39,16 @@ export async function getFloodRisk(zipCode, getToken = null) {
 
 export async function getMe(getToken) {
   const res = await authFetch(`${BASE}/me`, {}, getToken)
+  return res.json()
+}
+
+// ── Charan's new simulator functions ──
+export async function simulateProfile(profile, getToken = null) {
+  const res = await authFetch(`${BASE}/simulate`, { method: 'POST', body: JSON.stringify(profile) }, getToken)
+  return res.json()
+}
+
+export async function sendSimChat(message, profile = null, getToken = null) {
+  const res = await authFetch(`${BASE}/simulate/chat`, { method: 'POST', body: JSON.stringify({ message, profile }) }, getToken)
   return res.json()
 }
