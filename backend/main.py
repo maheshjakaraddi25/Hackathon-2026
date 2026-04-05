@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException, Depends, Security
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from jose import jwt, JWTError
 
@@ -79,13 +79,14 @@ def optional_auth(credentials: HTTPAuthorizationCredentials = Security(security)
 
 class UserProfile(BaseModel):
     age: int
-    income_range: str
+    annual_income: float = Field(gt=0)
+    monthly_expenses: float = Field(gt=0)
     dependents: int
     housing_type: str
     zip_code: str
     employment: str
     has_savings: bool
-    savings_months: int
+    savings_months: float = Field(ge=0)
 
 class ChatMessage(BaseModel):
     message: str
@@ -100,13 +101,6 @@ FLOOD_RISK_BY_ZIP_PREFIX = {
     "1": "low", "2": "medium", "3": "high", "4": "medium",
     "5": "low",  "6": "medium", "7": "high", "8": "low",
     "9": "medium", "0": "high",
-}
-
-INCOME_BRACKETS = {
-    "under_30k":  {"monthly": 2000,  "label": "Under $30k/yr"},
-    "30k_60k":    {"monthly": 3750,  "label": "$30k-$60k/yr"},
-    "60k_100k":   {"monthly": 6667,  "label": "$60k-$100k/yr"},
-    "over_100k":  {"monthly": 10000, "label": "Over $100k/yr"},
 }
 
 INSURANCE_PRODUCTS = {
@@ -144,7 +138,8 @@ def gemini_chat(message: str, profile: Optional[UserProfile] = None) -> str:
         context = ""
         if profile:
             context = (f"\n\n[User context: Age {profile.age}, "
-                       f"Income {profile.income_range}, "
+                       f"Income ${profile.annual_income:,.0f}/year, "
+                       f"Essential expenses ${profile.monthly_expenses:,.0f}/month, "
                        f"Housing: {profile.housing_type}, "
                        f"Dependents: {profile.dependents}, "
                        f"Savings: {profile.savings_months} months]")
@@ -172,11 +167,11 @@ def get_flood_risk(zip_code: str) -> str:
     return FLOOD_RISK_BY_ZIP_PREFIX.get(zip_code[0], "medium")
 
 def calculate_risk_scores(profile: UserProfile) -> dict:
-    monthly = INCOME_BRACKETS.get(profile.income_range, {}).get("monthly", 3000)
+    monthly = profile.monthly_expenses
     target_months = 6 if profile.dependents > 0 else 3
     fund_score = min(100, int((profile.savings_months / target_months) * 100))
     fund_gap_months = max(0, target_months - profile.savings_months)
-    fund_gap_amount = fund_gap_months * monthly * 0.7
+    fund_gap_amount = fund_gap_months * monthly
 
     needed = []
     if profile.housing_type == "rent":
@@ -200,14 +195,14 @@ def calculate_risk_scores(profile: UserProfile) -> dict:
             "target_months": target_months,
             "gap_months": fund_gap_months,
             "gap_amount": round(fund_gap_amount),
-            "monthly_income_est": monthly,
+            "monthly_expenses": monthly,
         },
         "insurance": {"score": insurance_score, "recommended": needed, "flood_risk": flood_risk},
         "flood":     {"score": flood_score, "risk_level": flood_risk, "zip_code": profile.zip_code},
     }
 
 def build_action_plan(profile: UserProfile, scores: dict) -> list:
-    monthly = scores["emergency_fund"]["monthly_income_est"]
+    monthly = scores["emergency_fund"]["monthly_expenses"]
     gap     = scores["emergency_fund"]["gap_amount"]
     ins_tasks = []
     if profile.housing_type == "rent":
@@ -230,7 +225,7 @@ def get_insurance_recommendations(profile: UserProfile) -> list:
             continue
         if key == "life" and profile.dependents == 0:
             continue
-        if key == "umbrella" and profile.income_range in ["under_30k", "30k_60k"]:
+        if key == "umbrella" and profile.annual_income < 60000:
             continue
         recs.append({"id": key, **product})
     return recs
@@ -257,7 +252,10 @@ def analyze_profile(profile: UserProfile, user=Depends(optional_auth)):
         "scores": scores,
         "action_plan": action_plan,
         "insurance_recommendations": insurance_recs,
-        "income_info": INCOME_BRACKETS.get(profile.income_range, {}),
+        "income_info": {
+            "annual_income": round(profile.annual_income, 2),
+            "monthly_expenses": round(profile.monthly_expenses, 2),
+        },
         "user": user.get("name") if user else None,
     }
 

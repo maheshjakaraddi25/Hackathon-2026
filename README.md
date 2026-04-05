@@ -107,7 +107,8 @@ curl -X POST http://localhost:8000/api/analyze \
   -H "Content-Type: application/json" \
   -d '{
     "age": 28,
-    "income_range": "30k_60k",
+    "annual_income": 72000,
+    "monthly_expenses": 3200,
     "dependents": 1,
     "housing_type": "rent",
     "zip_code": "77001",
