@@ -1,4 +1,6 @@
-const BASE = '/api'
+const BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : '/api'
 
 async function authFetch(url, options = {}, getToken = null) {
   const headers = { 'Content-Type': 'application/json', ...options.headers }
