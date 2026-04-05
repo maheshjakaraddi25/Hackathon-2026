@@ -10,7 +10,6 @@ from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 from jose import jwt, JWTError
 
-import google.generativeai as genai
 
 load_dotenv()
 
@@ -21,14 +20,11 @@ GEMINI_API_KEY     = os.getenv("GEMINI_API_KEY", "")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
 ELEVENLABS_VOICE_ID = "EXAVITQu4vr4xnSDxMaL"  # Sarah — warm, clear voice
 
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-
 app = FastAPI(title="FinGuard AI API", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -128,26 +124,33 @@ Guidelines:
 """
 
 def gemini_chat(message: str, profile: Optional[UserProfile] = None) -> str:
+    """Call Gemini via direct REST API."""
     if not GEMINI_API_KEY:
         return fallback_chat(message)
-    try:
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            system_instruction=SYSTEM_PROMPT,
-        )
-        context = ""
-        if profile:
-            context = (f"\n\n[User context: Age {profile.age}, "
-                       f"Income ${profile.annual_income:,.0f}/year, "
-                       f"Essential expenses ${profile.monthly_expenses:,.0f}/month, "
-                       f"Housing: {profile.housing_type}, "
-                       f"Dependents: {profile.dependents}, "
-                       f"Savings: {profile.savings_months} months]")
-        response = model.generate_content(message + context)
-        return response.text
-    except Exception as e:
-        print(f"Gemini error: {e}")
-        return fallback_chat(message)
+    context = ""
+    if profile:
+        context = (f"\n\n[User context: Age {profile.age}, Income {profile.income_range}, "
+                   f"Housing: {profile.housing_type}, Dependents: {profile.dependents}, "
+                   f"Savings: {profile.savings_months} months]")
+    payload = {
+        "contents": [{"parts": [{"text": f"{SYSTEM_PROMPT}\n\nUser question: {message}{context}"}]}],
+        "generationConfig": {"maxOutputTokens": 500, "temperature": 0.7}
+    }
+    import urllib.request, urllib.error, json as jm, time
+    for api_ver, model in [("v1","gemini-2.0-flash-001"),("v1","gemini-2.0-flash"),("v1beta","gemini-2.0-flash"),("v1beta","gemini-2.0-flash-lite")]:
+        url = f"https://generativelanguage.googleapis.com/{api_ver}/models/{model}:generateContent?key={GEMINI_API_KEY}"
+        for attempt in range(2):
+            try:
+                req = urllib.request.Request(url, data=jm.dumps(payload).encode(), headers={"Content-Type":"application/json"}, method="POST")
+                with urllib.request.urlopen(req, timeout=20) as r:
+                    return jm.loads(r.read())["candidates"][0]["content"]["parts"][0]["text"]
+            except urllib.error.HTTPError as e:
+                if e.code == 429:
+                    time.sleep(5*(attempt+1)); continue
+                break
+            except Exception:
+                break
+    return fallback_chat(message)
 
 def fallback_chat(message: str) -> str:
     msg = message.lower()
